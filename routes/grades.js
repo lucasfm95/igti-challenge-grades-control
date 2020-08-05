@@ -51,6 +51,121 @@ router.get("/:id", async (request, response, next) => {
     }
 });
 
+router.get("/total/subject/:subject/student/:student", async (request, response, next) => {
+    try {
+        const params = {
+            subject: request.params.subject,
+            student: request.params.student
+        }
+
+        logger.info(`Get grade by subject and student: ${JSON.stringify(params)}`);
+
+        if (!params || !params.student || !params.subject) {
+            let error = "The fields student, subject are required";
+            logger.error(error);
+            response.status(400).send({ error: error });
+        }
+
+        const data = JSON.parse(await readFile(global.fileNameGrades));
+
+        const gradesFiltered = data.grades.filter(grade => grade.subject === params.subject && grade.student === params.student);
+
+        if (gradesFiltered.length === 0) {
+            let error = "Grades not found, student and subject invalid";
+            logger.error(error);
+            response.status(204).end();
+            return;
+        }
+
+        const objResponse = {
+            totalGrades: gradesFiltered.reduce((previous, current) => previous + current.value, 0)
+        }
+
+        response.send(objResponse);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get("/average/subject/:subject/type/:type", async (request, response, next) => {
+    try {
+        const params = {
+            subject: request.params.subject,
+            type: request.params.type
+        }
+
+        logger.info(`Get average grade by subject and type: ${JSON.stringify(params)}`);
+
+        if (!params || !params.type || !params.subject) {
+            let error = "The fields type and subject are required";
+            logger.error(error);
+            response.status(400).send({ error: error });
+        }
+
+        const data = JSON.parse(await readFile(global.fileNameGrades));
+
+        const gradesFiltered = data.grades.filter(grade => grade.subject === params.subject && grade.type === params.type);
+
+        if (gradesFiltered.length === 0) {
+            let error = "Grades not found, type and subject invalid";
+            logger.error(error);
+            response.status(204).end();
+            return;
+        }
+
+        const total = gradesFiltered.reduce((previous, current) => previous + current.value, 0);
+
+
+        const objResponse = {
+            total: total,
+            length: gradesFiltered.length,
+            average: total / gradesFiltered.length
+        }
+
+        response.send(objResponse);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get("/better/subject/:subject/type/:type", async (request, response, next) => {
+    try {
+        const params = {
+            subject: request.params.subject,
+            type: request.params.type
+        }
+
+        logger.info(`Get better grade by subject and type: ${JSON.stringify(params)}`);
+
+        if (!params || !params.type || !params.subject) {
+            let error = "The fields type and subject are required";
+            logger.error(error);
+            response.status(400).send({ error: error });
+        }
+
+        const data = JSON.parse(await readFile(global.fileNameGrades));
+
+        const gradesFiltered = data.grades.filter(grade => grade.subject === params.subject && grade.type === params.type);
+
+        if (gradesFiltered.length === 0) {
+            let error = "Grades not found, type and subject invalid";
+            logger.error(error);
+            response.status(204).end();
+            return;
+        }
+
+        const gradesSorted = gradesFiltered.sort((a, b) => b.value - a.value);
+
+        const objResponse = {
+            grades: gradesSorted.slice(0, 3)
+        }
+
+        response.send(objResponse);
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.post("/", async (request, response, next) => {
 
     try {
